@@ -25,20 +25,17 @@ export KAGGLE_KEY=your_kaggle_api_key
 
 ### 3. Build and Start
 
-```bash
-cd /Users/tako/Desktop/Github/daily_task
-docker compose build
-```
+Navigate to project directory, then:
 
 ```bash
-docker compose down -v
+docker compose build
 ```
 
 ```bash
 docker compose up -d
 ```
 
-Wait 30 seconds for services to start, then trigger:
+Wait 30 seconds, then trigger:
 
 ```bash
 docker compose exec airflow-scheduler airflow dags trigger retail_pipeline
@@ -236,6 +233,7 @@ Daily metrics grouped by date, store, and product.
 | store_key | BIGINT | FK to dim_store |
 | product_key | BIGINT | FK to dim_product |
 | total_revenue | NUMERIC(14,4) | SUM(total_amount) |
+| total_quantity | INTEGER | SUM(quantity) |
 | total_transactions | INTEGER | COUNT(*) |
 | unique_customers | INTEGER | COUNT(DISTINCT customer_id) |
 | weighted_discount_pct | NUMERIC(8,4) | Revenue-weighted discount % |
@@ -247,6 +245,10 @@ SUM(discount_pct * total_amount) / SUM(total_amount)
 ```
 
 **Key:** `PRIMARY KEY (sales_date, store_key, product_key)` — one row per day/store/product.
+
+**⚠️ Note — Aggregation Close to Transaction Level:**
+
+The aggregation table is created at daily store-product level as required. However, in the provided dataset, `StoreLocation` is unique for almost every transaction. Since `store_key` is generated from `StoreLocation`, most `store_key` values appear only once. As a result, the aggregation table is close to transaction-level granularity, with most rows having `total_transactions = 1` and `unique_customers = 1`. This behavior is caused by the source data structure, not by an issue in the aggregation logic.
 
 ---
 
