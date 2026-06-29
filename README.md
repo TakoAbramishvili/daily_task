@@ -253,4 +253,14 @@ Every run is safe to rerun. No duplicates, no data loss.
 
 **Note:** Pooling is not configured (single daily run). Will be added in production if multiple DAGs run simultaneously.
 
+---
+
+## Future Enhancements
+
+**Production Improvements:**
+- **Alerting** — Add email/Slack notifications for DAG failures or SLA breaches
+- **Data Quality** — Add validation checks (null counts, value ranges, duplicates)
+- **Monitoring** — Add dashboards for pipeline health and data freshness
+- **Pooling** — Implement Airflow pools if multiple concurrent DAGs run
+
 

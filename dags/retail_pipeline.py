@@ -1,6 +1,7 @@
 import sys
 from datetime import datetime, timedelta
 from functools import partial
+from pytz import timezone
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
@@ -35,11 +36,10 @@ def compute_lfl_incremental(execution_date=None, **context):
 with DAG(
     dag_id="retail_pipeline",
     description="Download Kaggle retail transaction data, build DWH dimensions, facts, and analytics",
-    start_date=datetime(2024, 1, 1),
+    start_date=datetime(2024, 1, 1, tzinfo=timezone('Asia/Tbilisi')),
     schedule_interval="0 0 * * *",
     catchup=False,
     tags=["retail"],
-    timezone="Asia/Tbilisi",
 ) as dag:
 
     t_init        = PythonOperator(task_id="init_schema",          python_callable=partial(run_sql, "create_tables.sql"))
