@@ -251,4 +251,6 @@ The `retail_pipeline` DAG runs daily at **00:00 Georgian Time (Asia/Tbilisi)**.
 
 Every run is safe to rerun. No duplicates, no data loss.
 
+**Note:** Pooling is not configured (single daily run). Will be added in production if multiple DAGs run simultaneously.
+
 
