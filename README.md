@@ -49,13 +49,7 @@ docker compose exec airflow-scheduler airflow dags trigger retail_pipeline
 - Click **retail_pipeline** DAG
 - Click **Trigger DAG** button
 
-### 4. Monitor Progress
-
-```bash
-docker compose logs -f airflow-scheduler
-```
-
-### 5. View Data
+### 4. View Data
 
 **Airflow UI:** http://localhost:8080 (admin / admin)
 
@@ -176,7 +170,7 @@ One row per transaction. Contains measures and foreign keys to dimensions.
 | batch_id | TEXT | Airflow run ID |
 | loaded_at | TIMESTAMP | When loaded |
 
-**Idempotency:** `UNIQUE (row_hash)` — prevents duplicate transactions.
+`UNIQUE (row_hash)` — prevents duplicate transactions.
 
 **Measures:** quantity, price, discount_applied_pct, total_amount
 
@@ -201,17 +195,15 @@ Monthly Like-For-Like status per store. Compares current year vs previous year s
 
 **LFL Logic:**
 - `is_lfl = TRUE` only if: `current_store_days > 0 AND previous_store_days > 0 AND current_store_days = previous_store_days`
-- `is_lfl = FALSE` otherwise (including when 0 = 0)
+- `is_lfl = FALSE` otherwise
 
-**⚠️ Important Note — `is_lfl` is Always FALSE:**
+**Important Note — `is_lfl` is Always FALSE:**
 
 The source dataset contains 100,000 rows with 100,000 unique `StoreLocation` values. This means:
 - Every store location is unique (appears only once in the entire dataset)
 - A store cannot appear in both 2023 and 2024 (each location is distinct)
 - Year-over-year comparison is impossible at store level
 - **Expected result: `is_lfl` is FALSE for ALL rows**
-
-This is not a bug — it's a data characteristic. The dataset does not have repeating store locations, so LFL status cannot be meaningfully calculated by store.
 
 ---
 
@@ -246,7 +238,7 @@ The aggregation table is created at daily store-product level as required. Howev
 
 ## Airflow DAG
 
-The `retail_pipeline` DAG runs daily at **00:00 UTC**.
+The `retail_pipeline` DAG runs daily at **00:00 Georgian Time (Asia/Tbilisi)**.
 
 **Tasks (in order):**
 1. `init_schema` — Create/update tables
@@ -257,6 +249,6 @@ The `retail_pipeline` DAG runs daily at **00:00 UTC**.
 6. `compute_aggregations` → `compute_lfl` — Aggregations + LFL in parallel
 7. `compute_abc` — Calculate ABC analysis
 
-**Idempotency:** Every run is safe to rerun. No duplicates, no data loss.
+Every run is safe to rerun. No duplicates, no data loss.
 
 

@@ -39,6 +39,7 @@ with DAG(
     schedule_interval="0 0 * * *",
     catchup=False,
     tags=["retail"],
+    timezone="Asia/Tbilisi",
 ) as dag:
 
     t_init        = PythonOperator(task_id="init_schema",          python_callable=partial(run_sql, "create_tables.sql"))
