@@ -1,6 +1,6 @@
 # Retail Transaction Data Pipeline
 
-A production-ready data engineering pipeline that downloads retail transaction data from Kaggle, transforms it into a dimensional warehouse, and orchestrates all jobs with Apache Airflow — everything runs inside Docker.
+A production-ready data engineering pipeline that downloads retail transaction data from [Kaggle](https://www.kaggle.com/datasets/fahadrehman07/retail-transaction-dataset), transforms it into a dimensional warehouse, and orchestrates all jobs with Apache Airflow — everything runs inside Docker.
 
 ## Quick Start
 
@@ -35,11 +35,19 @@ docker compose build
 docker compose up -d
 ```
 
-Wait 30 seconds, then trigger:
+Wait 30 seconds, then trigger DAG:
+
+**Option A: Command line**
 
 ```bash
 docker compose exec airflow-scheduler airflow dags trigger retail_pipeline
 ```
+
+**Option B: Web UI**
+- Go to http://localhost:8080
+- Login: `admin` / `admin`
+- Click **retail_pipeline** DAG
+- Click **Trigger DAG** button
 
 ### 4. Monitor Progress
 
@@ -145,22 +153,6 @@ One row per unique product (source_product_id + product_category).
 
 **Key:** `UNIQUE (source_product_code)` — one product per code.
 
-**ABC Classes:**
-- **A**: Cumulative % ≤ 50 (top 50% of revenue/quantity)
-- **B**: Cumulative % 50-70
-- **C**: Cumulative % > 70 (bottom 30%)
-
-**Example:**
-```
-product_key: 5
-source_product_id: C
-source_product_code: C-Home Decor
-product_category: Home Decor
-product_name: Home Decor C
-abc_quantity: A
-abc_amount: B
-```
-
 ---
 
 ### 4. **fact_sales** — Sales Fact Table
@@ -252,27 +244,6 @@ The aggregation table is created at daily store-product level as required. Howev
 
 ---
 
-## Data Source
-
-**Dataset:** [Kaggle – Retail Transaction Dataset](https://www.kaggle.com/datasets/fahadrehman07/retail-transaction-dataset)
-
-**Columns Used:**
-
-| Source Column | Mapped To | Notes |
-|---|---|---|
-| CustomerID | fact_sales.customer_id | Customer grain |
-| ProductID | dim_product.source_product_id | Letters A-D |
-| Quantity | fact_sales.quantity | Units sold |
-| Price | fact_sales.price | Unit price |
-| TransactionDate | fact_sales.transaction_date | Full datetime |
-| PaymentMethod | fact_sales.payment_method | Cash, PayPal, etc |
-| StoreLocation | dim_store.store_location | Address |
-| ProductCategory | dim_product.product_category | Category name |
-| DiscountApplied(%) | fact_sales.discount_applied_pct | Discount % |
-| TotalAmount | fact_sales.total_amount | Final amount |
-
----
-
 ## Airflow DAG
 
 The `retail_pipeline` DAG runs daily at **00:00 UTC**.
@@ -288,60 +259,4 @@ The `retail_pipeline` DAG runs daily at **00:00 UTC**.
 
 **Idempotency:** Every run is safe to rerun. No duplicates, no data loss.
 
----
 
-## Queries
-
-**Check data volume:**
-```sql
-SELECT 'fact_sales' as table_name, COUNT(*) as rows FROM fact_sales
-UNION ALL
-SELECT 'agg_sales_daily_store_product', COUNT(*) FROM agg_sales_daily_store_product
-UNION ALL
-SELECT 'dim_store', COUNT(*) FROM dim_store
-UNION ALL
-SELECT 'dim_product', COUNT(*) FROM dim_product
-UNION ALL
-SELECT 'dim_lfl_store', COUNT(*) FROM dim_lfl_store;
-```
-
-**Check ABC analysis:**
-```sql
-SELECT product_key, source_product_code, product_name, abc_quantity, abc_amount
-FROM dim_product
-WHERE abc_quantity IS NOT NULL
-LIMIT 10;
-```
-
-**Check LFL status:**
-```sql
-SELECT year, month, store_key, is_lfl, is_lfl_by_state,
-       current_store_days, previous_store_days,
-       current_state_days, previous_state_days
-FROM dim_lfl_store
-WHERE is_lfl_by_state = true
-LIMIT 10;
-```
-
----
-
-## Stop & Cleanup
-
-**Keep data (stop containers):**
-```bash
-docker compose down
-```
-
-**Delete all data (fresh start):**
-```bash
-docker compose down -v
-```
-
----
-
-## Database Credentials
-
-- **Host:** `postgres` (internal) or `localhost:5432`
-- **Username:** `postgresadmin`
-- **Password:** `postgresadmin`
-- **Database:** `sales`
